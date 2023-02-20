@@ -55,10 +55,22 @@ function! s:LastMatch(haystack, needle)
     return lst[len(lst) - 1]
 endfunction
 
+" Starting from the current one, return the number of the first line
+" containing the given string
+function! s:SeekLine(str)
+    for l:i in range(line('.'), line('$'))
+        if stridx(getline(l:i), a:str) >= 0
+            return l:i
+        endif
+    endfor
+endfunction
+
 " Swap words adjacent to given infix word
 function! turnstile#turn(infix)
     let l:magic = '\v'
     let l:skip = v:count1 - 1
+    let l:lnum = s:SeekLine(a:infix)
+    let l:line = getline(l:lnum)
 
     " Remove magic while parsing given word
     let l:infix = '\V' . a:infix . l:magic
@@ -73,7 +85,7 @@ function! turnstile#turn(infix)
     " appearances in the left neighbor of the first word not to be skipped
     if l:skip > 0
         let l:start = s:StartPattern(l:infix, l:skip)
-        let l:m = matchlist(getline('.'), l:magic . l:start . l:mid)
+        let l:m = matchlist(l:line, l:magic . l:start . l:mid)
         let l:lneigh = s:LastMatch(l:m[1], l:magic . l:neigh)
 
         " Lower the skip count so that the words found in the left neighbor
@@ -85,10 +97,10 @@ function! turnstile#turn(infix)
     let l:start = s:StartPattern(l:infix, l:skip)
 
     " Identify all groups
-    let l:m = matchlist(getline('.'), l:magic . l:start . l:neigh . l:mid . l:neigh . '(.*)')
+    let l:m = matchlist(l:line, l:magic . l:start . l:neigh . l:mid . l:neigh . '(.*)')
 
     if len(l:m) > 5
         " Swap both neighbors
-        call setline('.', l:m[1] . l:m[4] . l:m[3] . l:m[2] . l:m[5])
+        call setline(l:lnum, l:m[1] . l:m[4] . l:m[3] . l:m[2] . l:m[5])
     endif
 endfunction
