@@ -81,23 +81,28 @@ function! turnstile#turn(infix)
     " Generate pattern for neighbors of given word meant to be swapped
     let l:neigh = s:NeighborPattern()
 
-    " If some instances of the given word ought to be skipped, count its
-    " appearances in the left neighbor of the first word not to be skipped
-    if l:skip > 0
-        let l:start = s:StartPattern(l:infix, l:skip)
-        let l:m = matchlist(l:line, l:magic . l:start . l:mid)
-        let l:lneigh = s:LastMatch(l:m[1], l:magic . l:neigh)
-
-        " Lower the skip count so that the words found in the left neighbor
-        " aren't included in the first match group 'start'
-        let l:skip -= count(l:lneigh, a:infix)
-    endif
-
     " Generate pattern for left side of line meant to stay in place
     let l:start = s:StartPattern(l:infix, l:skip)
+    let l:m = matchlist(l:line, l:magic . l:start . l:mid . l:neigh)
+
+    " Generate pattern for right side of line meant to stay in place.
+    " Calculate number of infix occurrences that should be in this group:
+    " All in line - all skipped - one in mid group - all in right neighbor
+    let l:endcnt = count(l:line, a:infix) - skip - 1 - count(l:m[3], a:infix)
+    let l:end = '(%(.*' . l:infix . '){' . string(endcnt) . '}.*)'
+
+    if l:skip > 0
+        " If some instances of the given word ought to be skipped, count its
+        " appearances in the left neighbor of the first word not to be skipped
+        let l:lneigh = s:LastMatch(l:m[1], l:magic . l:neigh)
+
+        " Regenerate start group with lower skip count so that it doesn't
+        " swallow the words found in the left neighbor
+        let l:start = s:StartPattern(l:infix, l:skip - count(l:lneigh, a:infix))
+    endif
 
     " Identify all groups
-    let l:m = matchlist(l:line, l:magic . l:start . l:neigh . l:mid . l:neigh . '(.*)')
+    let l:m = matchlist(l:line, l:magic . l:start . l:neigh . l:mid . l:neigh . l:end)
 
     if len(l:m) > 5
         " Swap both neighbors
