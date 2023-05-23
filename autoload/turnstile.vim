@@ -20,11 +20,14 @@ function! s:NeighborPattern()
     " Content between doule quotes
     let l:dquot = '".{-}"'
 
+    " Cast operator
+    let l:cast = '%(\(\w+\)\s*)?'
+
     " Floating point number
-    let l:float = '-?\d*\.\d+f?'
+    let l:float = l:cast . '-?\d*\.\d+f?'
 
     " Integer
-    let l:int = '-?%(\d+_)*\d+[ul]?'
+    let l:int = l:cast . '-?%(\d+_)*\d+[ul]?'
 
     " Name of variable, function, class, bool value, ...
     let l:iden = '\h\w*'
