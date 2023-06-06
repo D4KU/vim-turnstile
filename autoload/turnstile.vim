@@ -5,11 +5,38 @@ function! s:Or(...)
     return join(map(copy(a:000), '"%(" .. v:val .. ")"'), '|')
 endfunction
 
+" Returns a non-greedy regex pattern matching a parenthesis pair with
+" characters between them. Inner parenthesis are only allowed if they are
+" balanced. The argument specifies how many layers of parenthesis are
+" maximally supported. Adapted from https://stackoverflow.com/a/35271017
+function! s:ParenthesisPattern(depth)
+    " Matches any single character except for parenthesis
+    let l:noparen = '[^)(]'
+
+    " Left part of the pattern
+    let l:l= '\(%(' . l:noparen . '|'
+
+    " Right part of the pattern
+    let l:r= '){-}\)'
+
+    " One parenthesis pair with characters between them
+    let l:pat = '\('. l:noparen . '{-}\)'
+
+    " Wrap the start pattern in a left and right pattern part for every
+    " layer of depth requested
+    let l:i = 0
+    while l:i < a:depth
+        let l:pat = l:l . l:pat . l:r
+        let l:i += 1
+    endwhile
+
+    return l:pat
+endfunction
+
 " Return a regex matching anything expected next to an infix
 " operator
 function! s:NeighborPattern()
-    " Pair of parenthesis with optional content
-    let l:paren = '\(.{-}\)'
+    let l:paren = s:ParenthesisPattern(3)
 
     " Pair of squared brackets with at least one character in between
     let l:brack = '\[.{-1,}\]'
