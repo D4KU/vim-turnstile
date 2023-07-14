@@ -115,6 +115,10 @@ function! turnstile#turn(infix)
     let l:start = s:StartPattern(l:infix, l:skip)
     let l:m = matchlist(l:line, l:magic . l:start . l:mid . l:neigh)
 
+    if len(l:m) < 3
+        return
+    endif
+
     " Generate pattern for right side of line meant to stay in place.
     " Calculate number of infix occurrences that should be in this group:
     " All in line - all skipped - one in mid group - all in right neighbor
